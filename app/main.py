@@ -1,0 +1,57 @@
+import os
+from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import RedirectResponse
+
+from app.api.endpoints import upload, report, rules
+from app.core.config import settings
+from app.core.security import get_api_key, get_current_user
+from app.services.scheduler import setup_scheduler
+
+os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(settings.REPORT_FOLDER, exist_ok=True)
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    docs_url=f"{settings.API_V1_STR}/docs",
+    redoc_url=f"{settings.API_V1_STR}/redoc",
+)
+
+if settings.BACKEND_CORS_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+app.include_router(
+    upload.router,
+    prefix=f"{settings.API_V1_STR}/upload",
+    tags=["upload"],
+    dependencies=[Depends(get_api_key)],
+)
+app.include_router(
+    report.router,
+    prefix=f"{settings.API_V1_STR}/report",
+    tags=["report"],
+    dependencies=[Depends(get_api_key)],
+)
+app.include_router(
+    rules.router,
+    prefix=f"{settings.API_V1_STR}/rules",
+    tags=["rules"],
+    dependencies=[Depends(get_api_key)],
+)
+
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url=f"{settings.API_V1_STR}/docs")
+
+setup_scheduler(app)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
