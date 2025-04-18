@@ -1,5 +1,4 @@
 __pycache__/
-*.py
 *$py.class
 *.so
 .Python
