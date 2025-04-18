@@ -1,0 +1,18 @@
+{
+    "daily_report": {
+        "cron": "0 8 * * *",
+        "input_file": "/app/data/uploads/input_daily.csv",
+        "rules_file": "/app/data/uploads/rules_daily.json",
+        "output_format": "csv"
+    },
+    "weekly_report": {
+        "cron": "0 9 * * 1",
+        "input_file": "/app/data/uploads/input_weekly.csv",
+        "rules_file": "/app/data/uploads/rules_weekly.json",
+        "reference_file": "/app/data/uploads/reference_weekly.csv",
+        "join_keys": {
+            "client_id": "client_id"
+        },
+        "output_format": "xlsx"
+    }
+}
