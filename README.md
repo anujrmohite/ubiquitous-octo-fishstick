@@ -22,23 +22,24 @@ The Report Generator Microservice is designed to handle large CSV files, apply c
 ```bash
 
 # Clone the repository
-git clone https://github.com/yourusername/report-generator.git
-cd report-generator
+git clone https://github.com/anujrmohite/ubiquitous-octo-fishstick.git
+cd ubiquitous-octo-fishstick
 
 # Start the services
 docker-compose up -d
 
-# The API will be available at http://localhost:8000/api/v1/docs
+# The API will be available at 
+http://localhost:8000/api/v1/docs
 ```
 
 ### Manual Setup
 
 ```bash
-git clone https://github.com/yourusername/report-generator.git
-cd report-generator
+git clone https://github.com/anujrmohite/ubiquitous-octo-fishstick.git
+cd ubiquitous-octo-fishstick
 
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 
 pip install -r requirements.txt
 
@@ -75,10 +76,6 @@ Once the service is running, you can access the Swagger UI at:
 - `POST /api/v1/report/schedule` - Schedule a report generation
 - `GET /api/v1/report/schedule/list` - List scheduled report generations
 - `DELETE /api/v1/report/schedule/{job_id}` - Delete a scheduled report generation
-
-## 📊 Transformation Rules
-
-Rules are defined in JSON or YAML format and specify how to transform input data into output fields.
 
 ### Supported Operations
 
@@ -133,12 +130,10 @@ curl -X 'POST' \
 }'
 ```
 
-## 🧪 Testing
+## Testing
 
 ```bash
 pytest
-
 pytest --cov=app tests/
-
 pytest tests/test_parser.py
 ```
