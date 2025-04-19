@@ -2,7 +2,7 @@
 
 A high-performance microservice for transforming CSV data and generating reports with flexible transformation rules.
 
-## 📋 Overview
+## Overview
 
 The Report Generator Microservice is designed to handle large CSV files, apply customizable transformation rules, join with reference data, and generate downloadable reports in various formats. It's built with FastAPI for high performance and excellent developer experience.
 
