@@ -1,0 +1,7 @@
+{
+    "total_amount": "quantity * unit_price",
+    "profit_margin": "unit_price - cost_price",
+    "profit": "quantity * (unit_price - cost_price)",
+    "shipping_cost": "weight_kg * 2.5 + 5",
+    "stock_after_order": "stock_level - quantity"
+}

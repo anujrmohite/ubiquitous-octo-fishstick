@@ -1,6 +1,0 @@
-product_id,product_name,category,cost_price,supplier_id,weight_kg,stock_level
-P100,Basic Widget,Widgets,15.30,S01,0.5,250
-P200,Premium Gadget,Gadgets,120.00,S02,1.2,80
-P300,Budget Item,Basics,3.50,S03,0.2,500
-P400,Luxury Device,Electronics,300.00,S02,2.5,25
-P500,Standard Tool,Tools,7.25,S01,1.0,150

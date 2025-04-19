@@ -91,8 +91,17 @@ class ReportRequest(BaseModel):
     join_keys: Optional[Dict[str, str]] = Field(None, description="Dictionary mapping input keys to reference keys")
     output_format: str = Field("csv", description="Output format (csv, xlsx, json)")
 
+class RuleValidationRequest(BaseModel):
+    """Request model for validating rules against a CSV file."""
+    rules: Dict[str, str] = Field(..., description="Dictionary of transformation rules")
+    input_file: str = Field(..., description="Name of the input CSV file to validate against")
+    reference_file: Optional[str] = Field(None, description="Name of the reference CSV file")
+    join_keys: Optional[Dict[str, str]] = Field(None, description="Dictionary mapping input keys to reference keys for validation join")
+
+
 class RuleValidationResult(BaseModel):
     """Result of rule validation."""
     valid: bool
     message: str
+    details: Optional[Dict[str, Any]] = None
     rule_validations: Dict[str, bool]

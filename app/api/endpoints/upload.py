@@ -1,13 +1,17 @@
 import os
 import shutil
 from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, status
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, status, Query
 from fastapi.responses import JSONResponse
 import pandas as pd
+import logging
 
 from app.core.config import settings
 from app.core.security import get_api_key
 from app.services.parser import CSVParser
+from app.schemas.schemas import FileInfo
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -43,7 +47,7 @@ async def upload_reference_file(
 
 @router.get("/list", summary="List uploaded files")
 async def list_uploaded_files(
-    file_type: Optional[str] = None,
+    file_type: Optional[str] = Query(None),
     api_key: str = Depends(get_api_key)
 ):
     """
@@ -90,7 +94,7 @@ async def list_uploaded_files(
 @router.get("/sample/{filename}", summary="Get sample data from a file")
 async def get_sample_data(
     filename: str,
-    rows: int = 5,
+    rows: int = Query(5),
     api_key: str = Depends(get_api_key)
 ):
     """
@@ -114,7 +118,6 @@ async def get_sample_data(
         )
     
     try:
-        # Get sample data
         sample_data = CSVParser.get_sample_data(file_path, rows)
         
         return {

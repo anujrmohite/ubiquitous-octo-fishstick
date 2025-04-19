@@ -2,6 +2,7 @@ import os
 import pytest
 import pandas as pd
 import tempfile
+import shutil
 
 from app.services.parser import CSVParser
 from app.core.config import settings

@@ -1,16 +1,30 @@
+
 import os
 import json
 import yaml
 from typing import Dict, Any, Optional, List
-from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File, Form, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+import pandas as pd
+import logging
 
 from app.core.config import settings
 from app.core.security import get_api_key
 from app.services.transformer import RuleEngine
+from app.services.parser import CSVParser
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+class RuleFileInfo(BaseModel):
+    """Rules file information schema."""
+    name: str
+    size_bytes: int
+    created_at: float
+    rules_count: int
+    format: str
 
 class RuleRequest(BaseModel):
     """Request model for creating or updating transformation rules."""
@@ -23,14 +37,18 @@ class RuleValidationRequest(BaseModel):
     input_file: str = Field(..., description="Name of the input CSV file to validate against")
     reference_file: Optional[str] = Field(None, description="Name of the reference CSV file")
 
+class RuleValidationResult(BaseModel):
+    """Result of rule validation."""
+    valid: bool
+    message: str
+    details: Optional[Dict[str, Any]] = None
+    rule_validations: Dict[str, bool]
+
 @router.get("/list", summary="List available rule files")
 async def list_rules(
     api_key: str = Depends(get_api_key)
 ):
-    """
-    List all available rule files.
-    """
-    # Create upload folder if it doesn't exist
+    """List all available rule files."""
     os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
     
     rules_files = []
@@ -38,12 +56,9 @@ async def list_rules(
     for filename in os.listdir(settings.UPLOAD_FOLDER):
         file_path = os.path.join(settings.UPLOAD_FOLDER, filename)
         
-        # Only include JSON and YAML files that likely contain rules
         if os.path.isfile(file_path) and filename.lower().endswith(('.json', '.yaml', '.yml')):
-            # Get file stats
             file_stats = os.stat(file_path)
             
-            # Try to load the file as rules
             try:
                 rule_engine = RuleEngine(rules_file=file_path)
                 rules_count = len(rule_engine.rules)
@@ -53,13 +68,11 @@ async def list_rules(
                     "size_bytes": file_stats.st_size,
                     "created_at": file_stats.st_ctime,
                     "rules_count": rules_count,
-                    "format": os.path.splitext(filename)[1][1:]  # Remove the leading dot
+                    "format": os.path.splitext(filename)[1][1:]
                 })
             except Exception:
-                # Skip files that can't be loaded as rules
                 pass
     
-    # Sort files by creation time (newest first)
     rules_files.sort(key=lambda x: x["created_at"], reverse=True)
     
     return {"rules_files": rules_files}
@@ -70,11 +83,7 @@ async def get_rules(
     filename: str,
     api_key: str = Depends(get_api_key)
 ):
-    """
-    Get transformation rules from a file.
-    
-    - **filename**: Name of the rules file
-    """
+    """Get transformation rules from a file."""
     file_path = os.path.join(settings.UPLOAD_FOLDER, filename)
     
     if not os.path.exists(file_path):
@@ -98,13 +107,7 @@ async def create_rules(
     request: RuleRequest,
     api_key: str = Depends(get_api_key)
 ):
-    """
-    Create or update transformation rules.
-    
-    - **rules**: Dictionary of transformation rules
-    - **filename**: Filename to save rules
-    """
-    # Determine file format from extension
+    """Create or update transformation rules."""
     file_ext = os.path.splitext(request.filename)[1].lower()
     if file_ext not in ['.json', '.yaml', '.yml']:
         raise HTTPException(
@@ -112,14 +115,10 @@ async def create_rules(
             detail="Invalid file extension. Supported formats: .json, .yaml, .yml"
         )
     
-    # Create the rules file
     file_path = os.path.join(settings.UPLOAD_FOLDER, request.filename)
     
     try:
-        # Create rule engine with the provided rules
         rule_engine = RuleEngine(rules_dict=request.rules)
-        
-        # Save rules to file
         rule_engine.save_rules_to_file(file_path)
         
         return {
@@ -140,13 +139,7 @@ async def upload_rules_file(
     overwrite: bool = Form(False),
     api_key: str = Depends(get_api_key)
 ):
-    """
-    Upload a rules file (JSON or YAML).
-    
-    - **file**: Rules file to upload
-    - **overwrite**: Whether to overwrite existing file with same name
-    """
-    # Check file extension
+    """Upload a rules file (JSON or YAML)."""
     file_ext = os.path.splitext(file.filename)[1].lower()
     if file_ext not in ['.json', '.yaml', '.yml']:
         raise HTTPException(
@@ -154,14 +147,11 @@ async def upload_rules_file(
             detail="Invalid file extension. Supported formats: .json, .yaml, .yml"
         )
     
-    # Create upload directory if it doesn't exist
     os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
     
-    # Set target filename
     target_filename = file.filename
     file_path = os.path.join(settings.UPLOAD_FOLDER, target_filename)
     
-    # Check if file already exists
     if os.path.exists(file_path) and not overwrite:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -169,17 +159,14 @@ async def upload_rules_file(
         )
     
     try:
-        # Save the file
         with open(file_path, "wb") as buffer:
             content = await file.read()
             buffer.write(content)
         
-        # Validate the file contains valid rules
         try:
             rule_engine = RuleEngine(rules_file=file_path)
             rules_count = len(rule_engine.rules)
         except Exception as e:
-            # Remove the invalid file
             os.remove(file_path)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -190,11 +177,10 @@ async def upload_rules_file(
             "filename": target_filename,
             "size_bytes": os.path.getsize(file_path),
             "rules_count": rules_count,
-            "format": file_ext[1:]  # Remove the leading dot
+            "format": file_ext[1:]
         }
         
     except HTTPException:
-        # Re-raise HTTP exceptions
         raise
     except Exception as e:
         raise HTTPException(
@@ -208,17 +194,7 @@ async def validate_rules(
     request: RuleValidationRequest,
     api_key: str = Depends(get_api_key)
 ):
-    """
-    Validate that rules can be applied to a CSV file.
-    
-    - **rules**: Dictionary of transformation rules
-    - **input_file**: Name of the input CSV file to validate against
-    - **reference_file**: Name of the reference CSV file (optional)
-    """
-    # Import parser
-    from app.services.parser import CSVParser
-    
-    # Construct file paths
+    """Validate that rules can be applied to a CSV file."""
     input_path = os.path.join(settings.UPLOAD_FOLDER, request.input_file)
     
     if not os.path.exists(input_path):
@@ -237,13 +213,9 @@ async def validate_rules(
             )
     
     try:
-        # Create rule engine
         rule_engine = RuleEngine(rules_dict=request.rules)
         
-        # Load sample data from input and reference files
         if reference_path:
-            # Get join keys from the rules
-            # This is a simple approach - just use columns that are in both files
             input_columns = set(CSVParser.get_columns(input_path))
             ref_columns = set(CSVParser.get_columns(reference_path))
             common_columns = input_columns.intersection(ref_columns)
@@ -255,24 +227,19 @@ async def validate_rules(
                     "rule_validations": {}
                 }
             
-            # Create join keys dictionary (use same column name for both sides)
             join_keys = {col: col for col in common_columns}
             
-            # Load joined data sample
             sample_df = CSVParser.process_in_chunks(
                 input_file=input_path,
                 reference_file=reference_path,
                 join_keys=join_keys,
-                chunk_size=10  # Only need a small sample
+                chunk_size=10
             )
         else:
-            # Load input data sample
             sample_df = pd.read_csv(input_path, nrows=10)
         
-        # Validate rules against the sample data
         validation_results = rule_engine.validate_rules(sample_df)
         
-        # Check overall validity
         all_valid = all(validation_results.values())
         
         return {
@@ -293,11 +260,7 @@ async def delete_rules_file(
     filename: str,
     api_key: str = Depends(get_api_key)
 ):
-    """
-    Delete a rules file.
-    
-    - **filename**: Name of the rules file to delete
-    """
+    """Delete a rules file."""
     file_path = os.path.join(settings.UPLOAD_FOLDER, filename)
     
     if not os.path.exists(file_path):

@@ -3,28 +3,50 @@ version: '3.8'
 services:
   web:
     build: .
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
-      - .:/app
       - ./data/uploads:/app/data/uploads
       - ./data/reports:/app/data/reports
+      - ./data/rules:/app/data/rules
     ports:
       - "8000:8000"
     environment:
+      - TZ=Asia/Kolkata
+      - DATABASE_URL=postgresql://reportuser:reportpass@db:5432/reportdb
+
       - POSTGRES_SERVER=db
       - POSTGRES_USER=reportuser
       - POSTGRES_PASSWORD=reportpass
       - POSTGRES_DB=reportdb
+      - POSTGRES_PORT=5432
+
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+
       - UPLOAD_FOLDER=/app/data/uploads
       - REPORT_FOLDER=/app/data/reports
-      - CSV_CHUNK_SIZE=100000
-      - MAX_WORKERS=4
+      - RULES_FOLDER=/app/data/rules
+
+      - CSV_CHUNK_SIZE=50000
+      - MAX_WORKERS=8
+      - PYTHONHASHSEED=0
+      - OMP_NUM_THREADS=8
+      - OPENBLAS_NUM_THREADS=4
+      - MKL_NUM_THREADS=4
+      - NUMEXPR_NUM_THREADS=4
+      - DASK_DISTRIBUTED__WORKER__MEMORY__SPILL=0.85
+      - DASK_DISTRIBUTED__WORKER__MEMORY__TARGET=0.75
+      - API_KEY=dev_api_key
+
     depends_on:
       - db
       - redis
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/docs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   db:
     image: postgres:13
@@ -35,16 +57,26 @@ services:
       - POSTGRES_PASSWORD=reportpass
       - POSTGRES_DB=reportdb
     ports:
-      - "5432:5432"
+      - "5433:5432"
     restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reportuser -d reportdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:6
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - "6380:6379"
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   prometheus:
     image: prom/prometheus
