@@ -48,6 +48,7 @@ API available at `http://localhost:8000/api/v1/docs`. Default API Key: `dev_api_
 (Authentication via `X-API-Key: dev_api_key` required for all)
 
 *   `POST /api/v1/upload/input` - Upload input CSV.
+![Report Generator Workflow](assets/input.png)
 *   `POST /api/v1/upload/reference` - Upload reference CSV.
 *   `GET /api/v1/upload/list` - List uploaded files.
 *   `GET /api/v1/upload/sample/{filename}` - Sample data from file.
