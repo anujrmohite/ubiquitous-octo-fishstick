@@ -45,17 +45,10 @@ API available at `http://localhost:8000/api/v1/docs`. Default API Key: `dev_api_
 
 ## API Endpoints
 
-(Authentication via `X-API-Key: dev_api_key` required for all)
+(Authentication via `X-API-Key: dev_api_key` required for all - Providing Image for input, reference and result)
 
 *   `POST /api/v1/upload/input` - Upload input CSV.
-  
-![Report Generator Workflow](assets/input.png)
-
 *   `POST /api/v1/upload/reference` - Upload reference CSV.
-
-![Report Generator Workflow](assets/reference.png)
-
-
 *   `GET /api/v1/upload/list` - List uploaded files.
 *   `GET /api/v1/upload/sample/{filename}` - Sample data from file.
 *   `DELETE /api/v1/upload/{filename}` - Delete uploaded file.
@@ -68,6 +61,9 @@ API available at `http://localhost:8000/api/v1/docs`. Default API Key: `dev_api_
 *   `DELETE /api/v1/rules/{filename}` - Delete rules file.
 
 *   `POST /api/v1/report/generate` - Generate report (background task).
+
+# IMP: During report generation, file names should be, as provided in post request JSON file name.   
+
 *   `GET /api/v1/report/list` - List generated reports.
 *   `GET /api/v1/report/{report_id}` - Download report.
 *   `DELETE /api/v1/report/{report_id}` - Delete report.
