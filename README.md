@@ -62,7 +62,10 @@ API available at `http://localhost:8000/api/v1/docs`. Default API Key: `dev_api_
 
 *   `POST /api/v1/report/generate` - Generate report (background task).
 
-# IMP: During report generation, file names should be, as provided in post request JSON file name.   
+## IMP: During report generation, file names should be, as provided in post request JSON file name.   
+
+![Report Generator Workflow](assets/name.png)
+
 
 *   `GET /api/v1/report/list` - List generated reports.
 *   `GET /api/v1/report/{report_id}` - Download report.
