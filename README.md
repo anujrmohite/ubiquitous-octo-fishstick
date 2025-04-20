@@ -11,6 +11,7 @@ A high-performance microservice for transforming CSV data and generating reports
 -   **API Security**: API Key authentication (`X-API-Key` header).
 -   **Performance**: Multiprocessing for parallel rule application on chunks (`concurrent.futures.ProcessPoolExecutor`).
 
+![Report Generator Workflow](assets/operations.png)
 
 ## Setup
 
