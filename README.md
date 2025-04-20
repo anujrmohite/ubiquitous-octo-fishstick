@@ -64,10 +64,15 @@ API available at `http://localhost:8000/api/v1/docs`. Default API Key: `dev_api_
 
 ### IMP: During report generation, file names should be, as provided in post request JSON file name.e.g.
 
-![Report Generator Workflow](assets/name.png)
+![Name](assets/name.png)
 
 *   `GET /api/v1/report/list` - List generated reports.
 *   `GET /api/v1/report/{report_id}` - Download report.
+ 
+### IMP: To Download recent report, refer id from generate report post json
+
+![Response](assets/report.png)
+
 *   `DELETE /api/v1/report/{report_id}` - Delete report.
 *   `POST /api/v1/report/schedule` - Schedule report job.
 *   `GET /api/v1/report/schedule/list` - List scheduled jobs.
