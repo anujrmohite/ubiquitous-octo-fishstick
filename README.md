@@ -17,6 +17,11 @@ A high-performance microservice for transforming CSV data and generating reports
 
 # API available at `http://localhost:8000/api/v1/docs`. Default API Key: `dev_api_key`.
 
+## Add API Key @
+
+![Report Generator Workflow](assets/api.png)
+
+
 ### Using Docker Compose (Recommended)
 
 *   **Prerequisites:** Docker, Docker Compose.
